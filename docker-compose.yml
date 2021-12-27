@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+
+  nginxproxy:
+    image: nginxproxy/nginx-proxy:latest
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./nginxproxy/vhost.d/:/etc/nginx/vhost.d:ro
+    ports:
+      - "80:80"
+      - "3000:80"
+    restart: unless-stopped
+
+  svelte-app:
+    build: ./svelte-app
+    volumes:
+      - ./svelte-app:/usr/src/app
+      - /usr/src/app/node_modules
+    environment: 
+      - "VIRTUAL_HOST=pbbg.localtest.me"
+      - "VIRTUAL_PORT=3000"
+      - "JSONWEBTOKEN_REFRESHTOKEN_SECRET=${JSONWEBTOKEN_REFRESHTOKEN_SECRET}"
+      - "JSONWEBTOKEN_ACCESSTOKEN_SECRET=${JSONWEBTOKEN_ACCESSTOKEN_SECRET}"
+    restart: unless-stopped
+
+  node-app:
+    build: ./node-app
+    hostname: node-app
+    volumes:
+      - ./node-app:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - "JSONWEBTOKEN_REFRESHTOKEN_SECRET=${JSONWEBTOKEN_REFRESHTOKEN_SECRET}"
+      - "JSONWEBTOKEN_ACCESSTOKEN_SECRET=${JSONWEBTOKEN_ACCESSTOKEN_SECRET}"
+      - "DISCORD_SERVER_NAME=${DISCORD_SERVER_NAME}"
+      - "DISCORD_WEBHOOK=${DISCORD_WEBHOOK}"
+    restart: unless-stopped
+
+  database:
+    image: mariadb:latest
+    volumes:
+      - mysql-database-files:/var/lib/mysql
+    environment: 
+      - "MARIADB_RANDOM_ROOT_PASSWORD=1"
+      - "MARIADB_USER=${MARIADB_USER}"
+      - "MARIADB_PASSWORD=${MARIADB_PASSWORD}"
+      - "MARIADB_DATABASE=${MARIADB_DATABASE}"
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+
+volumes:
+  mysql-database-files:
+    name: mysql-database-files
+  
