@@ -179,7 +179,7 @@ Use this space to list resources you find helpful and would like to give credit 
 [forks-shield]: https://img.shields.io/github/forks/pirion/svelte-pbbg-template.svg?style=for-the-badge
 [forks-url]: https://github.com/pirion/svelte-pbbg-template/network/members
 [stars-shield]: https://img.shields.io/github/stars/pirion/svelte-pbbg-template.svg?style=for-the-badge
-[stars-url]: https://github.com/othneildrew/pirion/svelte-pbbg-template/stargazers
+[stars-url]: https://github.com/pirion/svelte-pbbg-template/stargazers
 [issues-shield]: https://img.shields.io/github/issues/pirion/svelte-pbbg-template.svg?style=for-the-badge
 [issues-url]: https://github.com/pirion/svelte-pbbg-template/issues
 [license-shield]: https://img.shields.io/github/license/pirion/svelte-pbbg-template.svg?style=for-the-badge
