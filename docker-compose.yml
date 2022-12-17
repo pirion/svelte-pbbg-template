@@ -8,49 +8,68 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock:ro
       - ./nginxproxy/vhost.d/:/etc/nginx/vhost.d:ro
     ports:
-      - "80:80"
-      - "3000:80"
+      - "80:80"       
+      - "3000:80"       
     restart: unless-stopped
 
-  svelte-app:
-    build: ./svelte-app
+  # SSL using https://github.com/nginx-proxy/acme-companion
+  #nginxproxy-letsencrypt:
+  #  image: nginxproxy/acme-companion
+  #  volumes:
+  #    - /var/run/docker.sock:/tmp/docker.sock:ro
+  #    - ./nginxproxy/vhost.d/:/etc/nginx/vhost.d
+  #    - ./nginxproxy/certs/:/etc/nginx/certs
+  #    - ./nginxproxy/html/:/usr/share/nginx/html
+  #  environment:
+  #    - "DEFAULT_EMAIL=username@example.com"
+  #   add LETSENCRYPT_HOST=subdomain.yourdomain.tld to any containers that should obtain their own SSL cert.
+
+  redis:
+    image: redis:latest
     volumes:
-      - ./svelte-app:/usr/src/app
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/data:/data
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+  mongo:
+    image: mongo:latest
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root"
+      - MONGO_INITDB_ROOT_PASSWORD=example"
+
+  mongo-express:
+    image: mongo-express:latest
+    restart: always
+    environment:
+      - "VIRTUAL_HOST=mongo.localtest.me"
+      - "VIRTUAL_PORT=8081"
+      - "ME_CONFIG_MONGODB_ADMINUSERNAME=root"
+      - "ME_CONFIG_MONGODB_ADMINPASSWORD=example"
+      - "ME_CONFIG_MONGODB_URL=mongodb://root:example@mongo:27017/"
+
+  web-client:
+    build: ./web-client
+    volumes:
+      - ./web-client:/usr/src/app
       - /usr/src/app/node_modules
     environment: 
       - "VIRTUAL_HOST=pbbg.localtest.me"
       - "VIRTUAL_PORT=3000"
-      - "JSONWEBTOKEN_REFRESHTOKEN_SECRET=${JSONWEBTOKEN_REFRESHTOKEN_SECRET}"
-      - "JSONWEBTOKEN_ACCESSTOKEN_SECRET=${JSONWEBTOKEN_ACCESSTOKEN_SECRET}"
+      - JSONWEBTOKEN_REFRESHTOKEN_SECRET=test
     restart: unless-stopped
 
-  node-app:
-    build: ./node-app
-    hostname: node-app
+  web-server:
+    build: ./web-server
+    hostname: web-server
     volumes:
-      - ./node-app:/usr/src/app
+      - ./web-server:/usr/src/app
       - /usr/src/app/node_modules
     environment:
-      - "JSONWEBTOKEN_REFRESHTOKEN_SECRET=${JSONWEBTOKEN_REFRESHTOKEN_SECRET}"
-      - "JSONWEBTOKEN_ACCESSTOKEN_SECRET=${JSONWEBTOKEN_ACCESSTOKEN_SECRET}"
-      - "DISCORD_SERVER_NAME=${DISCORD_SERVER_NAME}"
-      - "DISCORD_WEBHOOK=${DISCORD_WEBHOOK}"
+      - JSONWEBTOKEN_REFRESHTOKEN_SECRET=test
+      # setup discord callback at: https://discord.com/developers/applications
+      - "DISCORD_CALLBACK_URL=http://pbbg.localtest.me/server/auth/discord/callback"
+      - "DISCORD_CLIENT_ID=1053755594365993051"
+      - "DISCORD_CLIENT_SECRET=dmQHnAkb6Ciuu9fRuNssu3COFuswNn7m"
+      - "MONGO_URL=mongodb://root:example@mongo:27017/"
     restart: unless-stopped
-
-  database:
-    image: mariadb:latest
-    volumes:
-      - mysql-database-files:/var/lib/mysql
-    environment: 
-      - "MARIADB_RANDOM_ROOT_PASSWORD=1"
-      - "MARIADB_USER=${MARIADB_USER}"
-      - "MARIADB_PASSWORD=${MARIADB_PASSWORD}"
-      - "MARIADB_DATABASE=${MARIADB_DATABASE}"
-    ports:
-      - "3306:3306"
-    restart: unless-stopped
-
-volumes:
-  mysql-database-files:
-    name: mysql-database-files
-  

@@ -1,1 +1,0 @@
-<p>Inventory Game page.</p>
